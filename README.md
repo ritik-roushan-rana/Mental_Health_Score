@@ -42,6 +42,7 @@ The final model explains ~91% of the variance in mental health score, with a typ
 ├── .env                     # local config (not committed)
 ├── requirements.txt
 ├── Dockerfile               # container build for deployment
+├── render.yaml              # Render blueprint (Docker web service)
 └── .dockerignore
 ```
 
@@ -151,9 +152,21 @@ Response:
 - This is a statistical estimate for reflection, not a clinical or diagnostic tool.
 - The dataset's unusually clean correlations suggest it may be synthetic rather than collected survey data — worth keeping in mind before drawing real-world conclusions from it.
 
-## Deployment (Hugging Face Spaces)
+## Deployment
 
-The app is containerized with the included `Dockerfile`, which installs `requirements.txt`, copies `app/`, `static/`, and `model_artifacts/`, and serves on port `7860` — the port Hugging Face Spaces expects for the Docker SDK.
+The app is containerized with the included `Dockerfile`, which installs `requirements.txt`, copies `app/`, `static/`, and `model_artifacts/`, and serves via `uvicorn`. It reads the `PORT` env var if set (falling back to `7860`), so the same image works on both platforms below.
+
+### Render
+
+1. Push this repo to GitHub (already done if you're reading this from the repo).
+2. In the [Render dashboard](https://dashboard.render.com/), click **New > Blueprint** and connect this GitHub repo. Render will detect `render.yaml` and configure a Docker web service (`mental-health-score`) automatically, including the `/health` health check path.
+   - No `render.yaml`? Use **New > Web Service** instead, connect the repo, set **Runtime** to `Docker`, and leave the build/start commands as defined by the `Dockerfile`.
+3. Render assigns a random public URL like `https://mental-health-score.onrender.com` — click **Deploy** and it builds the Dockerfile and starts the app, binding to the `PORT` Render provides.
+4. To update after future code changes: `git push origin main` — Render auto-deploys on push (if auto-deploy is enabled on the service).
+
+Note: the free plan spins the service down after inactivity, so the first request after idling takes ~30-60s to cold-start.
+
+### Hugging Face Spaces
 
 1. Create a new Space at [huggingface.co/new-space](https://huggingface.co/new-space):
    - **SDK**: Docker

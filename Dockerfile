@@ -13,4 +13,4 @@ ENV MODEL_PATH=model_artifacts/mental_health_pipeline.joblib
 
 EXPOSE 7860
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}
