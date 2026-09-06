@@ -3,5 +3,4 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
-ml_api/.env
-ml_api/model_artifacts/*.joblib
+.env
