@@ -1,5 +1,7 @@
 # Mental Health Score Predictor
 
+**Live demo:** [mental-health-score-0ues.onrender.com](https://mental-health-score-0ues.onrender.com/) (free tier — first request after idling takes ~30-60s to cold-start)
+
 A FastAPI service that estimates a student's mental health score (0–10) from their digital habits, study routine, sleep, activity level, and stress — powered by a tuned Random Forest model trained on student lifestyle survey data.
 
 ## What this is
@@ -15,9 +17,9 @@ A FastAPI service that estimates a student's mental health score (0–10) from t
 |---|---|---|---|
 | Linear Regression | 0.7436 | 0.6765 | 0.5330 |
 | Random Forest (untuned) | 0.8729 | 0.4763 | 0.3517 |
-| **Random Forest (tuned)** | **0.9058** | **0.4101** | **0.2888** |
+| **Random Forest (tuned, depth-capped)** | **0.9030** | **0.4101** | **0.3018** |
 
-The final model explains ~91% of the variance in mental health score, with a typical prediction error under 0.3 points on a scale of roughly 3.6–9.4.
+The final model explains ~90% of the variance in mental health score, with a typical prediction error under 0.3 points on a scale of roughly 3.6–9.4. Tree depth is capped (`max_depth=18`) so the serialized pipeline stays small (~10MB) and loads in well under 512MB of RAM — the original unbounded trees scored marginally higher (R² 0.9058) but needed ~555MB just to unpickle, which OOM'd on free-tier hosting.
 
 ## Project structure
 
@@ -158,13 +160,15 @@ The app is containerized with the included `Dockerfile`, which installs `require
 
 ### Render
 
+Live at **[mental-health-score-0ues.onrender.com](https://mental-health-score-0ues.onrender.com/)**.
+
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. In the [Render dashboard](https://dashboard.render.com/), click **New > Blueprint** and connect this GitHub repo. Render will detect `render.yaml` and configure a Docker web service (`mental-health-score`) automatically, including the `/health` health check path.
    - No `render.yaml`? Use **New > Web Service** instead, connect the repo, set **Runtime** to `Docker`, and leave the build/start commands as defined by the `Dockerfile`.
-3. Render assigns a random public URL like `https://mental-health-score.onrender.com` — click **Deploy** and it builds the Dockerfile and starts the app, binding to the `PORT` Render provides.
+3. Render assigns a public URL (e.g. `https://<service-name>.onrender.com`) — click **Deploy** and it builds the Dockerfile and starts the app, binding to the `PORT` Render provides.
 4. To update after future code changes: `git push origin main` — Render auto-deploys on push (if auto-deploy is enabled on the service).
 
-Note: the free plan spins the service down after inactivity, so the first request after idling takes ~30-60s to cold-start.
+Note: the free plan spins the service down after inactivity, so the first request after idling takes ~30-60s to cold-start. It's also capped at 512MB RAM, which is why the model uses depth-capped trees (see [Model performance](#model-performance)).
 
 ### Hugging Face Spaces
 
